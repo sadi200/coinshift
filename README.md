@@ -1,2 +1,2 @@
-# ShiftAutoBot-NTE
-Full Tutorial Join https://t.me/NTExhaust
+
+Full Tutorial Join https://t.me/Earnpoint10
