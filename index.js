@@ -40,12 +40,12 @@ function readProxiesFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Gagal membaca file proxy.txt:", err.message));
+    console.error(chalk.red("Failed to read proxy.txt file:", err.message));
     return [];
   }
 }
 
-cfonts.say("NT Exhaust", {
+cfonts.say("Earn & Point ", {
   font: "block",
   align: "center",
   colors: ["cyan", "magenta"],
@@ -55,14 +55,14 @@ cfonts.say("NT Exhaust", {
   space: true,
   maxLength: "0",
 });
-console.log(centerText("=== Telegram Channel 🚀 : NT Exhaust (@NTExhaust) ==="));
+console.log(centerText("=== Telegram Channel: Earn & Point (@Earnpoint10) ==="));
 
 let proxyUrl = null;
 let agent = null;
 let axiosInstance = axios.create();
 
 async function setupProxy() {
-  const useProxy = await askQuestion(chalk.cyan("\nApakah Anda ingin menggunakan proxy? (Y/n): "));
+  const useProxy = await askQuestion(chalk.cyan("\nDo you want to use a proxy? (Y/n): "));
   if (useProxy.toLowerCase() === 'y') {
     const proxies = readProxiesFromFile('proxy.txt');
     if (proxies.length > 0) {
@@ -72,16 +72,16 @@ async function setupProxy() {
       } else if (proxyUrl.startsWith('socks5://')) {
         agent = new SocksProxyAgent(proxyUrl);
       } else {
-        console.log(chalk.red("Format proxy tidak dikenali. Harap gunakan http/https atau socks5."));
+        console.log(chalk.red("Unrecognized proxy format. Please use http/https or socks5."));
         return;
       }
       axiosInstance = axios.create({ httpAgent: agent, httpsAgent: agent });
-      console.log(chalk.green(`Menggunakan proxy: ${proxyUrl}`));
+      console.log(chalk.green(`Using proxy: ${proxyUrl}`));
     } else {
-      console.log(chalk.red("File proxy.txt kosong atau tidak ditemukan. Melanjutkan tanpa proxy."));
+      console.log(chalk.red("proxy.txt file is empty or not found. Continuing without proxy."));
     }
   } else {
-    console.log(chalk.blue("Melanjutkan tanpa proxy."));
+    console.log(chalk.blue("Continuing without proxy."));
   }
 }
 
@@ -103,7 +103,7 @@ async function liveCountdown(durationMs) {
   return new Promise(resolve => {
     const timer = setInterval(() => {
       const remaining = Math.max(endTime - Date.now(), 0);
-      process.stdout.write(chalk.yellow(`\rCycle berikutnya dalam ${formatCountdown(remaining)} ...`));
+      process.stdout.write(chalk.yellow(`\rNext cycle in ${formatCountdown(remaining)} ...`));
       if (remaining <= 0) {
         clearInterval(timer);
         process.stdout.write("\n");
@@ -165,7 +165,7 @@ async function verifyTask(activityId, headers, privyIdToken) {
 
     const verifyData = response.data.data ? response.data.data.verifyActivity : null;
     if (!verifyData || !verifyData.record) {
-      return { success: false, error: "Tidak ada data record" };
+      return { success: false, error: "No record data" };
     }
 
     const status = verifyData.record.status;
@@ -251,7 +251,7 @@ async function performCheckIn(activityId, headers, privyIdToken) {
     );
     return response.data;
   } catch (err) {
-    console.error(chalk.red(`Error saat check-in untuk activityId: ${activityId}: ${err.message}`));
+    console.error(chalk.red(`Error during check-in for activityId: ${activityId}: ${err.message}`));
     return null;
   }
 }
@@ -324,19 +324,19 @@ Resources:
       return { userLoginToken, displayName, wallet, address, loginTime: Date.now(), privyIdToken: identity_token };
     }, 30, 2000, debug);
   } catch (err) {
-    console.error(chalk.red(`Login gagal untuk akun ${shortAddress((new Wallet(walletKey)).address)}: ${err.message}`));
+    console.error(chalk.red(`Login failed for account ${shortAddress((new Wallet(walletKey)).address)}: ${err.message}`));
     return null;
   }
 }
 
 async function runCycleOnce(walletKey) {
-  const loginSpinner = ora(chalk.cyan(" Memproses login...")).start();
+  const loginSpinner = ora(chalk.cyan(" Processing login...")).start();
   const loginData = await doLogin(walletKey, false);
   if (!loginData) {
-    loginSpinner.fail(chalk.red("Login gagal setelah max attempt. Melewati akun."));
+    loginSpinner.fail(chalk.red("Login failed after max attempts. Skipping account."));
     return;
   }
-  loginSpinner.succeed(chalk.green(" Login Sukses"));
+  loginSpinner.succeed(chalk.green(" Login Successful"));
 
   const { userLoginToken, displayName, address, loginTime, privyIdToken } = loginData;
 
@@ -368,7 +368,7 @@ async function runCycleOnce(walletKey) {
     const response = await axiosInstance.post("https://api.deform.cc/", userMePayload, { headers: userMeHeaders });
     userMePoints = response.data.data.userMe.campaignSpot.points || 0;
   } catch (err) {
-    console.error(chalk.red("Error saat mengambil XP UserMe:", err.response ? err.response.data : err.message));
+    console.error(chalk.red("Error fetching UserMe XP:", err.response ? err.response.data : err.message));
   }
 
   const campaignPayload = {
@@ -408,10 +408,10 @@ async function runCycleOnce(walletKey) {
     const campaignResponse = await axiosInstance.post("https://api.deform.cc/", campaignPayload, { headers: campaignHeaders });
     campaignData = campaignResponse.data.data.campaign;
   } catch (err) {
-    console.error(chalk.red("Error Campaign:", err.response ? err.response.data : err.message));
+    console.error(chalk.red("Campaign Error:", err.response ? err.response.data : err.message));
     throw err;
   }
-  if (!campaignData) throw new Error("Data campaign tidak ditemukan");
+  if (!campaignData) throw new Error("Campaign data not found");
 
   let claimedTasks = [];
   let unclaimedTasks = [];
@@ -423,25 +423,25 @@ async function runCycleOnce(walletKey) {
     }
   });
 
-  let checkinStatus = "Belum Check-in";
+  let checkinStatus = "Not Checked-in Yet";
   const checkinActivityId = "304a9530-3720-45c8-a778-fbd3060d5cfd";
   const isDailyCheckinClaimed = claimedTasks.some(task => task.title.toLowerCase().includes("daily check-in"));
   if (isDailyCheckinClaimed) {
-    checkinStatus = "Already check-in today";
-    console.log(chalk.green("Already check-in today."));
+    checkinStatus = "Already checked-in today";
+    console.log(chalk.green("Already checked-in today."));
   } else {
-    const spinnerCheckin = ora(chalk.cyan(`Melakukan check-in untuk Daily Check-in`)).start();
+    const spinnerCheckin = ora(chalk.cyan(`Performing check-in for Daily Check-in`)).start();
     try {
       const checkInResponse = await performCheckIn(checkinActivityId, campaignHeaders, privyIdToken);
       spinnerCheckin.stop();
       if (!checkInResponse) {
-        checkinStatus = "Check-in Gagal";
-        console.log(chalk.red(`Check-in gagal: Tidak ada respons dari server.`));
+        checkinStatus = "Check-in Failed";
+        console.log(chalk.red(`Check-in failed: No response from server.`));
       } else if (
         checkInResponse?.data?.verifyActivity?.record?.status?.toUpperCase() === "COMPLETED"
       ) {
-        checkinStatus = "Check-in Berhasil";
-        console.log(chalk.green("Check-in berhasil dilakukan."));
+        checkinStatus = "Check-in Successful";
+        console.log(chalk.green("Check-in successfully performed."));
       } else if (
         checkInResponse?.data?.errors?.some(err =>
           err.message?.toLowerCase().includes("already checked in") ||
@@ -451,16 +451,16 @@ async function runCycleOnce(walletKey) {
           err.extensions?.clientFacingMessage?.toLowerCase().includes("user needs to wait before trying again")
         )
       ) {
-        checkinStatus = "Already check-in today";
-        console.log(chalk.green("Already check-in today."));
+        checkinStatus = "Already checked-in today";
+        console.log(chalk.green("Already checked-in today."));
       } else {
-        checkinStatus = "Check-in Gagal";
-        console.log(chalk.red(`Check-in gagal. Respons: ${JSON.stringify(checkInResponse)}`));
+        checkinStatus = "Check-in Failed";
+        console.log(chalk.red(`Check-in failed. Response: ${JSON.stringify(checkInResponse)}`));
       }
     } catch (err) {
       spinnerCheckin.stop();
-      checkinStatus = "Check-in Gagal";
-      console.log(chalk.red(`Check-in gagal: ${err.response ? JSON.stringify(err.response.data) : err.message}`));
+      checkinStatus = "Check-in Failed";
+      console.log(chalk.red(`Check-in failed: ${err.response ? JSON.stringify(err.response.data) : err.message}`));
     }
   }
 
@@ -471,15 +471,15 @@ async function runCycleOnce(walletKey) {
   console.log(chalk.cyanBright(`Address       : ${shortAddress(address)}`));
   console.log(chalk.cyanBright(`XP            : ${userMePoints}`));
   console.log(chalk.cyanBright(`Daily Checkin : ${checkinStatus}`));
-  console.log(chalk.cyanBright(`Proxy         : ${proxyUrl || "Tidak ada"}`));
+  console.log(chalk.cyanBright(`Proxy         : ${proxyUrl || "None"}`));
   console.log(chalk.magenta('============================================================================'));
 
   console.log(chalk.magenta('\n----------------------------- Claimed Tasks ----------------------------\n'));
   if (claimedTasks.length === 0) {
-    console.log(chalk.red('(Tidak ada task yang telah claimed)\n'));
+    console.log(chalk.red('(No tasks have been claimed)\n'));
   } else {
     claimedTasks.forEach(task => {
-      console.log(chalk.green(`[VERIFIED] Task: ${task.title} => Sudah Claimed`));
+      console.log(chalk.green(`[VERIFIED] Task: ${task.title} => Already Claimed`));
     });
     console.log('');
   }
@@ -487,7 +487,7 @@ async function runCycleOnce(walletKey) {
 
   console.log(chalk.magenta('---------------------------- Unclaimed Tasks ---------------------------\n'));
   if (unclaimedTasks.length === 0) {
-    console.log(chalk.red('(Tidak ada unclaimed task)\n'));
+    console.log(chalk.red('(No unclaimed tasks)\n'));
   } else {
     for (const task of unclaimedTasks) {
       const spinnerTask = ora(chalk.cyan(`Verifying: ${task.title}`)).start();
@@ -510,18 +510,18 @@ async function mainLoopRoundRobin() {
 
   const accounts = readPrivateKeysFromFile('.env');
   if (!accounts.length) {
-    console.error(chalk.red("Tidak ada private key ditemukan di file .env"));
+    console.error(chalk.red("No private keys found in .env file"));
     process.exit(1);
   }
 
   while (true) {
     const cycleStart = Date.now();
     for (const key of accounts) {
-      console.log(chalk.cyan(`Memproses akun: ${shortAddress((new Wallet(key)).address)}\n`));
+      console.log(chalk.cyan(`Processing account: ${shortAddress((new Wallet(key)).address)}\n`));
       try {
         await runCycleOnce(key);
       } catch (err) {
-        console.error(chalk.red(`Error untuk akun ${shortAddress((new Wallet(key)).address)}: ${err.message}`));
+        console.error(chalk.red(`Error for account ${shortAddress((new Wallet(key)).address)}: ${err.message}`));
       }
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -539,9 +539,9 @@ function readPrivateKeysFromFile(filename) {
     const content = fs.readFileSync(filename, 'utf8');
     return content.split('\n').map(line => line.trim()).filter(line => line !== '');
   } catch (err) {
-    console.error(chalk.red("Gagal membaca file .env:", err.message));
+    console.error(chalk.red("Failed to read .env file:", err.message));
     process.exit(1);
   }
 }
 
-mainLoopRoundRobin().catch(err => console.error(chalk.red("Terjadi error fatal:", err.message)));
+mainLoopRoundRobin().catch(err => console.error(chalk.red("Fatal error occurred:", err.message)));
